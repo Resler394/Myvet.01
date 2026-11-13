@@ -1,0 +1,186 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --brand-primary: #3A683D;
+  --brand-dark: #1B2F1C;
+  --brand-secondary: #5A7E32;
+
+  --brand-sage: #859766;
+  --brand-sage-soft: #A3A87F;
+  --brand-sage-pale: #E7ECD9;
+
+  --background-main: #F8F8F1;
+  --background-white: #FFFFFF;
+
+  --text-primary: #1B2F1C;
+  --text-secondary: #52604C;
+
+  --border-color: #C7D2BA;
+  --button-hover: #2F5933;
+
+  --shadow-soft: rgba(27, 47, 28, 0.08);
+  --overlay-dark: rgba(27, 47, 28, 0.35);
+}
+
+.dark,
+:root.dark {
+  --brand-primary: #4E8252;
+  --brand-dark: #E7ECD9;
+  --brand-secondary: #749F48;
+
+  --brand-sage: #9FB282;
+  --brand-sage-soft: #B8C29D;
+  --brand-sage-pale: #223724;
+
+  --background-main: #111A12;
+  --background-white: #18261A;
+
+  --text-primary: #F1F5E8;
+  --text-secondary: #A3B596;
+
+  --border-color: #2A3F2C;
+  --button-hover: #3E6B41;
+
+  --shadow-soft: rgba(0, 0, 0, 0.35);
+  --overlay-dark: rgba(0, 0, 0, 0.75);
+}
+
+@layer base {
+  body {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #F8F8F1;
+    color: #1B2F1C;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+}
+
+.dark body {
+  background-color: #111A12;
+  color: #F1F5E8;
+}
+
+/* Automatic Dark Mode Brand Mapping for existing hardcoded utility classes */
+.dark .bg-\[\#F8F8F1\] {
+  background-color: #111A12 !important;
+}
+
+.dark .bg-white,
+.dark .bg-\[\#FFFFFF\] {
+  background-color: #18261A !important;
+}
+
+.dark .bg-white\/80 {
+  background-color: rgba(24, 38, 26, 0.8) !important;
+}
+
+.dark .bg-white\/95 {
+  background-color: rgba(24, 38, 26, 0.95) !important;
+}
+
+.dark .text-\[\#1B2F1C\] {
+  color: #F1F5E8 !important;
+}
+
+.dark .text-\[\#52604C\] {
+  color: #A3B596 !important;
+}
+
+.dark .text-\[\#859766\] {
+  color: #9FB282 !important;
+}
+
+.dark .border-\[\#C7D2BA\] {
+  border-color: #2A3F2C !important;
+}
+
+.dark .border-\[\#E7ECD9\] {
+  border-color: #233425 !important;
+}
+
+.dark .bg-\[\#E7ECD9\] {
+  background-color: #223724 !important;
+  color: #E2ECD4 !important;
+}
+
+.dark .bg-\[\#E7ECD9\]\/40 {
+  background-color: rgba(34, 55, 36, 0.4) !important;
+}
+
+.dark .hover\:bg-\[\#F8F8F1\]:hover {
+  background-color: #1E2E20 !important;
+}
+
+.dark .hover\:bg-\[\#E7ECD9\]:hover {
+  background-color: #2A422D !important;
+}
+
+.dark .divide-\[\#E7ECD9\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #233425 !important;
+}
+
+.dark .divide-\[\#C7D2BA\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #2A3F2C !important;
+}
+
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark textarea,
+.dark select {
+  background-color: #152217 !important;
+  color: #F1F5E8 !important;
+  border-color: #2A3F2C !important;
+}
+
+.dark input:not([type="checkbox"]):not([type="radio"]):focus,
+.dark textarea:focus,
+.dark select:focus {
+  background-color: #1A2A1C !important;
+  border-color: #4E8252 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #6C8265 !important;
+}
+
+.font-brand-script {
+  font-family: 'Caveat', cursive, sans-serif;
+}
+
+/* Custom scrollbar matching My Vet botanical theme */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #C7D2BA;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #859766;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #2A3F2C;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #3E5A40;
+}
+
+/* Printable prescription pad styles */
+@media print {
+  body {
+    background-color: #ffffff !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
