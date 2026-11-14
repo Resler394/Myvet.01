@@ -7,8 +7,6 @@ interface AuthContextValue {
   loading: boolean;
   error: string | null;
   refreshSession: () => Promise<void>;
-  login: (identifier: string, password: string, clinicId?: string) => Promise<void>;
-  logout: () => Promise<void>;
   switchClinic: (clinicId: string) => Promise<void>;
 }
 
@@ -36,7 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(data);
     } catch (err: any) {
       setSession(EMPTY_SESSION);
-      setError(err instanceof ApiError ? err.message : 'Impossible de vérifier la session.');
+      setError(err instanceof ApiError ? err.message : 'Impossible de charger la session clinique.');
     } finally {
       setLoading(false);
     }
@@ -45,21 +43,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     refreshSession();
   }, [refreshSession]);
-
-  const login = async (identifier: string, password: string, clinicId?: string) => {
-    setError(null);
-    const data = await api.post<ClinicSession>('/api/auth/login', {
-      identifier,
-      password,
-      clinicId,
-    });
-    setSession(data);
-  };
-
-  const logout = async () => {
-    await api.post('/api/auth/logout');
-    setSession(EMPTY_SESSION);
-  };
 
   const switchClinic = async (clinicId: string) => {
     const data = await api.post<ClinicSession>('/api/auth/switch-clinic', { clinicId });
@@ -73,8 +56,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         error,
         refreshSession,
-        login,
-        logout,
         switchClinic,
       }}
     >

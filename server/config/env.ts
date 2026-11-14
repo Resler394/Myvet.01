@@ -32,15 +32,16 @@ export function getServerEnv(): ServerEnv {
   const isVercel = Boolean(process.env.VERCEL || process.env.VERCEL_ENV);
   const isProduction = nodeEnv === 'production' || process.env.VERCEL_ENV === 'production';
 
-  const sessionSecret = process.env.SESSION_SECRET || (isProduction ? '' : EPHEMERAL_DEV_SECRET);
-  if (isProduction && (!sessionSecret || sessionSecret.length < 16)) {
+  const requireLogin = process.env.REQUIRE_LOGIN === 'true';
+  const sessionSecret = process.env.SESSION_SECRET || EPHEMERAL_DEV_SECRET;
+  if (isProduction && requireLogin && (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 16)) {
     throw new Error(
-      'CRITICAL SECURITY ERROR: SESSION_SECRET must be set (>= 16 characters) in production environments.'
+      'CRITICAL SECURITY ERROR: SESSION_SECRET must be set (>= 16 characters) when REQUIRE_LOGIN=true in production.'
     );
   }
 
   const autoDevLogin =
-    !isProduction && process.env.AUTO_DEV_LOGIN !== 'false';
+    !requireLogin && process.env.AUTO_DEV_LOGIN !== 'false';
 
   const smsModeRaw = (process.env.SMS_PROVIDER_MODE || 'TEST').toUpperCase();
   const smsProviderMode: 'TEST' | 'PRODUCTION' =

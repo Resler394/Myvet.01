@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ClinicDataProvider } from './context/DataContext';
-import { LoginPage } from './components/auth/LoginPage';
 import { AppLayout } from './components/layout/AppLayout';
 import { AtAGlanceDashboard } from './pages/AtAGlanceDashboard';
 import { AgendaPage } from './pages/AgendaPage';
@@ -19,8 +18,8 @@ import { InventoryPage } from './pages/InventoryPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
 
-const AuthGate: React.FC = () => {
-  const { session, loading } = useAuth();
+const AppShell: React.FC = () => {
+  const { loading } = useAuth();
 
   if (loading) {
     return (
@@ -33,10 +32,6 @@ const AuthGate: React.FC = () => {
         </div>
       </div>
     );
-  }
-
-  if (!session.authenticated) {
-    return <LoginPage />;
   }
 
   return (
@@ -69,7 +64,7 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
-          <AuthGate />
+          <AppShell />
         </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>

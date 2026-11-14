@@ -18,7 +18,6 @@ import {
   X,
   Sun,
   Moon,
-  LogOut,
   Building2
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
@@ -132,7 +131,7 @@ export const Sidebar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toggleTheme, isDark } = useTheme();
-  const { session, switchClinic, logout } = useAuth();
+  const { session, switchClinic } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [currentLang] = useState('Français');
   const [switchingClinic, setSwitchingClinic] = useState(false);
@@ -158,11 +157,6 @@ export const Sidebar: React.FC = () => {
     } finally {
       setSwitchingClinic(false);
     }
-  };
-
-  const handleSignOut = async () => {
-    await logout();
-    setMobileOpen(false);
   };
 
   const userFullName = session.user?.fullName || 'Dr. Vétérinaire';
@@ -269,31 +263,19 @@ export const Sidebar: React.FC = () => {
           </button>
         </div>
 
-        {/* Authenticated Staff Profile & Logout */}
-        <div className="flex items-center justify-between gap-2 px-1 py-1">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-full bg-[#E7ECD9] text-[#3A683D] border border-[#C7D2BA] font-bold text-xs flex items-center justify-center shrink-0">
-              {userInitials}
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="font-semibold text-[13px] text-[#1B2F1C] truncate">
-                {userFullName}
-              </span>
-              <span className="text-[11px] text-[#859766] truncate" title={activeClinicName}>
-                {roleLabel} · {activeClinicName.replace('My Vet — ', '')}
-              </span>
-            </div>
+        {/* Active Practitioner Profile */}
+        <div className="flex items-center gap-2.5 px-1 py-1 min-w-0">
+          <div className="w-9 h-9 rounded-full bg-[#E7ECD9] text-[#3A683D] border border-[#C7D2BA] font-bold text-xs flex items-center justify-center shrink-0">
+            {userInitials}
           </div>
-
-          <button
-            type="button"
-            onClick={handleSignOut}
-            title="Déconnexion"
-            aria-label="Se déconnecter"
-            className="p-1.5 rounded-lg border border-[#C7D2BA] bg-[#F8F8F1] hover:bg-[#FEF2F2] hover:border-[#FECDD3] text-[#52604C] hover:text-[#DC2626] transition-colors cursor-pointer shrink-0"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+          <div className="flex flex-col min-w-0">
+            <span className="font-semibold text-[13px] text-[#1B2F1C] truncate">
+              {userFullName}
+            </span>
+            <span className="text-[11px] text-[#859766] truncate" title={activeClinicName}>
+              {roleLabel} · {activeClinicName.replace('My Vet — ', '')}
+            </span>
+          </div>
         </div>
       </div>
     </div>

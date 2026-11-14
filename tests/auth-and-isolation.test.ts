@@ -36,6 +36,7 @@ describe('Authentication, Production Fail-Closed, RBAC & Multi-Clinic Tenant Iso
     process.env.NODE_ENV = 'test';
     delete process.env.DATABASE_URL;
     delete process.env.AUTO_DEV_LOGIN;
+    delete process.env.REQUIRE_LOGIN;
     delete process.env.VERCEL_ENV;
     process.env.SESSION_SECRET = 'test-secret-key-at-least-32-chars-long';
   });
@@ -44,12 +45,18 @@ describe('Authentication, Production Fail-Closed, RBAC & Multi-Clinic Tenant Iso
     process.env = { ...originalEnv };
   });
 
-  it('auto-authenticates default dev clinic when NODE_ENV !== production', async () => {
+  it('auto-authenticates default clinic seamlessly in both dev and production when no login wall is enabled', async () => {
     const res = await dispatchApiRequest(makeReq('GET', '/api/auth/session'), store);
     expect(res.status).toBe(200);
     expect(res.body.authenticated).toBe(true);
     expect(res.body.isDevAutoLogin).toBe(true);
     expect(res.body.activeClinic.id).toBe('clinic-myvet-ouled-fayet');
+
+    process.env.NODE_ENV = 'production';
+    const prodSession = await dispatchApiRequest(makeReq('GET', '/api/auth/session'), store);
+    expect(prodSession.status).toBe(200);
+    expect(prodSession.body.authenticated).toBe(true);
+    expect(prodSession.body.activeClinic.id).toBe('clinic-myvet-ouled-fayet');
   });
 
   it('fails closed with 503 DATABASE_UNAVAILABLE when NODE_ENV=production without DATABASE_URL', async () => {
@@ -66,8 +73,9 @@ describe('Authentication, Production Fail-Closed, RBAC & Multi-Clinic Tenant Iso
     expect(healthRes.body.code).toBe('DATABASE_UNAVAILABLE');
   });
 
-  it('requires explicit login in production (disables autoDevLogin) and issues HMAC cookie', async () => {
+  it('requires explicit login when REQUIRE_LOGIN=true and issues HMAC cookie', async () => {
     process.env.NODE_ENV = 'production';
+    process.env.REQUIRE_LOGIN = 'true';
 
     const unauthSession = await dispatchApiRequest(makeReq('GET', '/api/auth/session'), store);
     expect(unauthSession.status).toBe(200);
@@ -97,8 +105,9 @@ describe('Authentication, Production Fail-Closed, RBAC & Multi-Clinic Tenant Iso
     expect(Array.isArray(authedOwners.body)).toBe(true);
   });
 
-  it('enforces login rate limiting (429 on 5th failed attempt)', async () => {
+  it('enforces login rate limiting (429 on 5th failed attempt) when REQUIRE_LOGIN=true', async () => {
     process.env.NODE_ENV = 'production';
+    process.env.REQUIRE_LOGIN = 'true';
 
     for (let i = 0; i < 4; i++) {
       const bad = await dispatchApiRequest(
