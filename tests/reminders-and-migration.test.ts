@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import crypto from 'node:crypto';
 import { dispatchApiRequest } from '../server/core/router.ts';
 import type { HttpRequest } from '../server/core/http.ts';
 import { processDueReminders } from '../server/jobs/reminderEngine.ts';
@@ -17,12 +18,18 @@ function req(method: string, path: string, body?: any, headers: Record<string, s
 }
 
 describe('SMS Reminder Engine, Queue Controls & Non-Destructive LocalStorage Migration', () => {
+  const originalEnv = { ...process.env };
   let store: MemoryClinicStore;
 
   beforeEach(() => {
     process.env.NODE_ENV = 'test';
     delete process.env.AUTO_DEV_LOGIN;
+    delete process.env.SMS_WEBHOOK_SECRET;
     store = new MemoryClinicStore();
+  });
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
   });
 
   it('schedules J-7/3/1 reminders on vaccination creation and prevents duplicate dispatch on rerun', async () => {
@@ -86,7 +93,7 @@ describe('SMS Reminder Engine, Queue Controls & Non-Destructive LocalStorage Mig
     expect(deferredRun.sent).toBe(0);
   });
 
-  it('supports manual send-now, cancel, and simulated test SMS endpoint', async () => {
+  it('supports manual send-now, cancel, signed/unsigned webhook, and simulated test SMS endpoint', async () => {
     const vacRes = await dispatchApiRequest(
       req('POST', '/api/vaccinations', {
         animalId: 'maya',
@@ -112,12 +119,25 @@ describe('SMS Reminder Engine, Queue Controls & Non-Destructive LocalStorage Mig
     expect(sendNowRes.body.isSimulated).toBe(true);
     expect(sendNowRes.body.status).toBe('Sent');
 
-    // Simulate delivery webhook callback updating Sent -> Delivered
+    // Simulate signed delivery webhook callback updating Sent -> Delivered
+    process.env.SMS_WEBHOOK_SECRET = 'test-webhook-secret';
+    const webhookBody = {
+      providerMessageId: sendNowRes.body.log.provider_message_id,
+      status: 'Delivered',
+    };
+    const sig = crypto
+      .createHmac('sha256', process.env.SMS_WEBHOOK_SECRET)
+      .update(JSON.stringify(webhookBody))
+      .digest('hex');
+
+    const unsignedRes = await dispatchApiRequest(
+      req('POST', '/api/sms/webhook', webhookBody),
+      store
+    );
+    expect(unsignedRes.status).toBe(401);
+
     const webhookRes = await dispatchApiRequest(
-      req('POST', '/api/sms/webhook', {
-        providerMessageId: sendNowRes.body.log.provider_message_id,
-        status: 'Delivered',
-      }),
+      req('POST', '/api/sms/webhook', webhookBody, { 'x-sms-signature': sig }),
       store
     );
     expect(webhookRes.status).toBe(200);

@@ -13,21 +13,51 @@ export class DatabaseUnavailableError extends Error {
 
 let singletonPool: Pool | null = null;
 
-function shouldUseSsl(connectionString: string, isProduction: boolean): boolean | { rejectUnauthorized: boolean } {
+function normalizeConnectionConfig(
+  connectionString: string,
+  isProduction: boolean
+): { connectionString: string; ssl: boolean | { rejectUnauthorized: boolean } } {
   const lower = connectionString.toLowerCase();
   if (lower.includes('sslmode=disable') || lower.includes('localhost') || lower.includes('127.0.0.1')) {
-    return false;
+    return { connectionString, ssl: false };
   }
-  if (
+
+  const useSsl =
     lower.includes('supabase.co') ||
     lower.includes('supabase.com') ||
     lower.includes('neon.tech') ||
     lower.includes('sslmode=require') ||
-    isProduction
-  ) {
-    return { rejectUnauthorized: false };
+    lower.includes('sslmode=prefer') ||
+    lower.includes('sslmode=verify-full') ||
+    isProduction;
+
+  if (!useSsl) {
+    return { connectionString, ssl: false };
   }
-  return false;
+
+  if (lower.includes('sslmode=verify-full')) {
+    return { connectionString, ssl: { rejectUnauthorized: true } };
+  }
+
+  // pg-connection-string v3+ treats sslmode=require/prefer as verify-full and overrides `ssl`.
+  // Remove sslmode from the URL so explicit { rejectUnauthorized: false } is honored by node-postgres.
+  try {
+    const parsed = new URL(connectionString);
+    if (parsed.searchParams.has('sslmode')) {
+      parsed.searchParams.delete('sslmode');
+    }
+    return {
+      connectionString: parsed.toString(),
+      ssl: { rejectUnauthorized: false },
+    };
+  } catch {
+    return {
+      connectionString: connectionString
+        .replace(/([?&])sslmode=[^&]+&?/gi, '$1')
+        .replace(/[?&]$/, ''),
+      ssl: { rejectUnauthorized: false },
+    };
+  }
 }
 
 export function getPool(): Pool {
@@ -39,12 +69,13 @@ export function getPool(): Pool {
   }
 
   if (!singletonPool) {
+    const pgConfig = normalizeConnectionConfig(env.databaseUrl, env.isProduction);
     singletonPool = new Pool({
-      connectionString: env.databaseUrl,
+      connectionString: pgConfig.connectionString,
       max: env.isVercel ? 5 : 10,
       idleTimeoutMillis: 10_000,
       connectionTimeoutMillis: 8_000,
-      ssl: shouldUseSsl(env.databaseUrl, env.isProduction),
+      ssl: pgConfig.ssl,
     });
 
     singletonPool.on('error', (err) => {
